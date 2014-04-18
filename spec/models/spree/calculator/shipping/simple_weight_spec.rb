@@ -24,19 +24,19 @@ module Spree
 
       let(:package) { double(Stock::Package,
                              order: mock_model(Order),
-                             contents: [Stock::Package::ContentItem.new(variant1, 4),
-                                        Stock::Package::ContentItem.new(variant2, 6)]) }
+                             contents: [Stock::Package::ContentItem.new(1,variant1, 4),
+                                        Stock::Package::ContentItem.new(2,variant2, 6)]) }
 
       it "correctly calculates shipping when handling fee applies" do
         calculator.available?(package).should == true
-        calculator.compute(package).should == 71.8 # 50.3 cost + 21.5 handling
+        calculator.compute_package(package).should == 71.8 # 50.3 cost + 21.5 handling
       end
 
       it "correctly calculates shipping when handling fee does not apply" do
         calculator.stub(preferred_handling_max: 10)
 
         calculator.available?(package).should == true
-        calculator.compute(package).should == 50.3
+        calculator.compute_package(package).should == 50.3
       end
 
       it "does not apply to overweight order" do
@@ -63,6 +63,16 @@ module Spree
 
         calculator.stub(preferred_costs_string: "abc:dfg\nerge:67")
         calculator.available?(package).should == false
+      end
+
+      it "correctly calculates shipping when costs string has useless spaces and newlines" do
+        calculator.stub(:preferred_costs_string => %q{50:20
+                                                      100:50.3
+
+
+                                                      })
+        calculator.available?(package).should == true
+        calculator.compute_package(package).should == 71.8
       end
     end
   end
